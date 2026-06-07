@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: healer-app
-          image: shashankramakanth/healer-app:latest
+          image: shashankramakanth/healer-app:v1.0.0
           ports:
             - containerPort: 8000
           livenessProbe:

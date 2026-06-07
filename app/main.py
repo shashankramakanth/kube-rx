@@ -1,7 +1,7 @@
 import os
 import time
 import threading
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from starlette.responses import Response
 
@@ -19,9 +19,25 @@ REQUEST_DURATION = Histogram(
 )
 
 
+@app.middleware("http")
+async def record_metrics(request: Request, call_next):
+    start = time.time()
+    response = await call_next(request)
+    duration = time.time() - start
+
+    endpoint = request.url.path
+    REQUEST_COUNT.labels(
+        method=request.method,
+        endpoint=endpoint,
+        status_code=response.status_code,
+    ).inc()
+    REQUEST_DURATION.labels(endpoint=endpoint).observe(duration)
+
+    return response
+
+
 @app.get("/health")
 def health():
-    REQUEST_COUNT.labels(method="GET", endpoint="/health", status_code=200).inc()
     return {"status": "ok"}
 
 
@@ -32,8 +48,6 @@ def metrics():
 
 @app.get("/stress")
 def stress():
-    REQUEST_COUNT.labels(method="GET", endpoint="/stress", status_code=200).inc()
-
     def burn():
         end = time.time() + 30
         while time.time() < end:
@@ -45,5 +59,4 @@ def stress():
 
 @app.get("/crash")
 def crash():
-    REQUEST_COUNT.labels(method="GET", endpoint="/crash", status_code=200).inc()
     os._exit(1)
