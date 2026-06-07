@@ -1,21 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
-  labels:
-    app: nginx
+  name: healer-app
+  namespace: healer
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: nginx
+      app: healer-app
   template:
     metadata:
       labels:
-        app: nginx
+        app: healer-app
     spec:
       containers:
-        - name: nginx
-          image: nginx:latest
+        - name: healer-app
+          image: shashankramakanth/healer-app:latest
           ports:
-            - containerPort: 80
+            - containerPort: 8000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
