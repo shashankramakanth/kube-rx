@@ -1,2 +1,3 @@
 cluster-credentials.env
 *.env
+k8s-healer-plan.md
