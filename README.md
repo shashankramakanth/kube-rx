@@ -26,16 +26,6 @@ FastAPI app (3 pods)
   Cluster healed ✅
 ```
 
-## Layers
-
-| Layer | Component | Status |
-|---|---|---|
-| 1 | FastAPI failure simulator + Kubernetes manifests | ✅ Done |
-| 2 | Prometheus | ⬜ Pending |
-| 3 | Alertmanager | ⬜ Pending |
-| 4 | ArgoCD | ⬜ Pending |
-| 5 | AI Agent (Claude API + MCP) | ⬜ Pending |
-
 ## Layer 1 — FastAPI App
 
 A minimal failure simulator that gives Prometheus and the AI agent something to observe and fix.
