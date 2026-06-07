@@ -51,16 +51,6 @@ k8s-healer/
 │   └── service.yaml       # NodePort 30080
 ```
 
-### Cluster
-
-3-node Kubernetes cluster (v1.32.0) on Pluralsight:
-
-| Role | Host |
-|---|---|
-| Control plane | `4928a29e701c.mylabserver.com` |
-| Worker 1 | `4928a29e702c.mylabserver.com` |
-| Worker 2 | `4928a29e703c.mylabserver.com` |
-
 ### Deploy
 
 ```bash
