@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: healer-app
   namespace: healer
+  labels:
+    app: healer-app
 spec:
   selector:
     app: healer-app
