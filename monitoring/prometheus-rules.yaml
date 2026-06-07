@@ -1,0 +1,53 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: healer-alerts
+  namespace: monitoring
+  labels:
+    release: monitoring        # required — operator only loads PrometheusRules with this label (same as the ServiceMonitor)
+spec:
+  groups:
+    - name: healer.rules
+      rules:
+        # Restart count climbing — the headline crashloop signal
+        - alert: PodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="healer"}[5m]) > 3
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Pod {{ $labels.pod }} is crash looping"
+            description: "{{ $labels.pod }} restarted {{ $value | printf \"%.0f\" }} times in 5 minutes."
+
+        # CPU usage above 80% of the 500m limit (0.5 * 0.8 = 0.4 cores) — driven by /stress
+        - alert: HighCPU
+          expr: rate(container_cpu_usage_seconds_total{namespace="healer", container="healer-app"}[2m]) > 0.4
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "High CPU on {{ $labels.pod }}"
+            description: "{{ $labels.pod }} is using {{ $value | printf \"%.2f\" }} cores (>80% of limit)."
+
+        # 5xx ratio over 5% of total requests
+        - alert: HighErrorRate
+          expr: |
+            sum(rate(http_requests_total{namespace="healer", status_code=~"5.."}[1m]))
+              /
+            sum(rate(http_requests_total{namespace="healer"}[1m])) > 0.05
+          for: 1m
+          labels:
+            severity: critical
+          annotations:
+            summary: "High 5xx error rate in healer namespace"
+            description: "Over 5% of requests are returning 5xx for the last minute."
+
+        # Pod stuck not-ready
+        - alert: PodNotReady
+          expr: kube_pod_status_ready{namespace="healer", condition="true"} == 0
+          for: 2m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod {{ $labels.pod }} not ready"
+            description: "{{ $labels.pod }} has been not-ready for more than 2 minutes."

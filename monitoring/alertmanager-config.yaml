@@ -1,0 +1,21 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: healer-webhook
+  namespace: monitoring
+  labels:
+    release: monitoring        # must match alertmanagerConfigSelector (set via helm values — see note below)
+spec:
+  route:
+    receiver: ai-agent
+    groupBy: ["alertname", "pod"]
+    groupWait: 10s             # short waits so the demo reacts fast
+    groupInterval: 30s
+    repeatInterval: 5m
+  receivers:
+    - name: ai-agent
+      webhookConfigs:
+        # Layer 5 target. Placeholder until the agent Service exists.
+        # Once the agent runs in the cluster, point this at its in-cluster DNS name.
+        - url: http://healer-agent.healer.svc.cluster.local:8080/webhook
+          sendResolved: true
