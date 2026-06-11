@@ -1,6 +1,6 @@
-# k8s-healer
+# kube-rx
 
-An autonomous Kubernetes self-healing platform. When something breaks in the cluster, the system detects it, reasons about it, and fixes it — without human intervention.
+An AI-powered Kubernetes debugger. When something breaks in the cluster, the system detects it, investigates using MCP tools, and recommends a fix.
 
 ## Architecture
 
@@ -40,7 +40,7 @@ A minimal failure simulator that gives Prometheus and the AI agent something to 
 ### Repo structure
 
 ```
-k8s-healer/
+kube-rx/
 ├── app/
 │   ├── main.py            # FastAPI app
 │   ├── requirements.txt
@@ -55,7 +55,7 @@ k8s-healer/
 
 ```bash
 # On the control plane after every push
-cd k8s-healer && git pull && kubectl apply -f k8s/
+cd kube-rx && git pull && kubectl apply -f k8s/
 ```
 
 ### Test
