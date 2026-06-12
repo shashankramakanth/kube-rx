@@ -1,3 +1,8 @@
 cluster-credentials.env
 *.env
 k8s-healer-plan.md
+docs/layer5-agent-concepts.md
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
