@@ -119,7 +119,7 @@ curl http://<worker-node-ip>:30080/crash    # → PodCrashLooping, PodNotReady
 `AlertmanagerConfig` (namespace `monitoring`) matches alerts where `namespace=healer` and forwards them via webhook to the AI agent:
 
 ```
-http://healer-agent.healer.svc.cluster.local:8080/webhook
+http://k8s-debugger-agent.healer.svc.cluster.local:8080/webhook
 ```
 
 > **Note:** The Alertmanager CR must set `alertmanagerConfigMatcherStrategy: None`. Without it, the operator injects `namespace=monitoring` as a forced matcher and healer alerts never route through.
@@ -214,3 +214,55 @@ KUBECONFIG=~/.kube/kube-rx.yaml .venv/bin/python -c "from mcp_server.tools.pods 
 ```
 
 In production, `KUBECONFIG` is injected via a pod service account or Secrets Manager — no credentials file needed.
+
+## Layer 4 — Webhook Agent
+
+A FastAPI service that receives Alertmanager webhook POSTs and logs incoming alerts. This is the entry point for the AI investigation loop.
+
+### Repo structure
+
+```
+kube-rx/
+├── agent/
+│   ├── main.py            # FastAPI app — POST /webhook, GET /health
+│   ├── requirements.txt
+│   └── Dockerfile
+└── k8s/
+    ├── agent-deployment.yaml   # 1 replica in healer namespace
+    └── agent-service.yaml      # ClusterIP on port 8080
+```
+
+The Service named `k8s-debugger-agent` in the `healer` namespace resolves the DNS address Alertmanager is configured to POST to:
+```
+http://k8s-debugger-agent.healer.svc.cluster.local:8080/webhook
+```
+
+### Deploy
+
+```bash
+kubectl apply -f k8s/agent-deployment.yaml -f k8s/agent-service.yaml
+```
+
+### Verify alerts are arriving
+
+```bash
+kubectl logs -n healer -l app=k8s-debugger-agent -f
+```
+
+Each alert logs one line:
+```
+alert received | name=PodCrashLooping status=firing namespace=healer pod=healer-app-abc severity=critical summary=...
+```
+
+### Docker image
+
+```
+docker.io/shashankramakanth/k8s-debugger-agent:v0.1.0
+```
+
+To rebuild and push:
+
+```bash
+docker build --platform linux/amd64 -t shashankramakanth/k8s-debugger-agent:<tag> ./agent
+docker push shashankramakanth/k8s-debugger-agent:<tag>
+```

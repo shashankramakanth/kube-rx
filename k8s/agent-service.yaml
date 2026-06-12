@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: healer-agent
+  namespace: healer
+  labels:
+    app: healer-agent
+spec:
+  selector:
+    app: healer-agent
+  ports:
+    - port: 8080
+      targetPort: 8080

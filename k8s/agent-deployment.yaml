@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: healer-agent
+  namespace: healer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: healer-agent
+  template:
+    metadata:
+      labels:
+        app: healer-agent
+    spec:
+      containers:
+        - name: healer-agent
+          image: shashankramakanth/k8s-debugger-agent:v0.1.0
+          ports:
+            - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
