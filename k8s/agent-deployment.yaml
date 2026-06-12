@@ -4,7 +4,7 @@ metadata:
   name: healer-agent
   namespace: healer
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: healer-agent
@@ -13,9 +13,27 @@ spec:
       labels:
         app: healer-agent
     spec:
+      serviceAccountName: healer-agent
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: healer-agent
+                topologyKey: kubernetes.io/hostname
       containers:
         - name: healer-agent
-          image: shashankramakanth/k8s-debugger-agent:v0.1.0
+          image: shashankramakanth/k8s-debugger-agent:v0.2.0
+          env:
+            - name: OPENROUTER_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: healer-agent-secrets
+                  key: openrouter-api-key
+            - name: MODEL
+              value: "anthropic/claude-3.5-haiku"
           ports:
             - containerPort: 8080
           livenessProbe:
