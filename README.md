@@ -1,6 +1,6 @@
 # kube-rx
 
-An AI-powered Kubernetes debugger. When something breaks in the cluster, the system detects it, investigates using MCP tools, and recommends a fix.
+An AI-powered Kubernetes debugger. When something breaks in the cluster, the system detects it and investigates using MCP tools to diagnose the root cause.
 
 ## Architecture
 
@@ -11,19 +11,16 @@ FastAPI app (3 pods)
   Prometheus          ← scrapes metrics every 15s
        │ alert fires
        ▼
-  Alertmanager        ← defines what "broken" means
-       │ webhook POST
+  Alertmanager        ← routes alerts via webhook
+       │ POST /webhook
        ▼
-  AI Agent (Python)   ← Claude API + MCP tools
-       │ commits fix
+  AI Agent (Python)   ← receives alert
+       │ kubectl tools (MCP)
        ▼
-    GitHub            ← source of truth
-       │ detects change
-       ▼
-    ArgoCD            ← syncs cluster automatically
+  Cluster             ← investigates pods, logs, events
        │
        ▼
-  Cluster healed ✅
+  Diagnosis logged ✅
 ```
 
 ## Layer 1 — FastAPI App
@@ -119,7 +116,7 @@ curl http://<worker-node-ip>:30080/crash    # → PodCrashLooping, PodNotReady
 `AlertmanagerConfig` (namespace `monitoring`) matches alerts where `namespace=healer` and forwards them via webhook to the AI agent:
 
 ```
-http://k8s-debugger-agent.healer.svc.cluster.local:8080/webhook
+http://healer-agent.healer.svc.cluster.local:8080/webhook
 ```
 
 > **Note:** The Alertmanager CR must set `alertmanagerConfigMatcherStrategy: None`. Without it, the operator injects `namespace=monitoring` as a forced matcher and healer alerts never route through.
@@ -232,9 +229,9 @@ kube-rx/
     └── agent-service.yaml      # ClusterIP on port 8080
 ```
 
-The Service named `k8s-debugger-agent` in the `healer` namespace resolves the DNS address Alertmanager is configured to POST to:
+The Service named `healer-agent` in the `healer` namespace resolves the DNS address Alertmanager is configured to POST to:
 ```
-http://k8s-debugger-agent.healer.svc.cluster.local:8080/webhook
+http://healer-agent.healer.svc.cluster.local:8080/webhook
 ```
 
 ### Deploy
@@ -246,7 +243,7 @@ kubectl apply -f k8s/agent-deployment.yaml -f k8s/agent-service.yaml
 ### Verify alerts are arriving
 
 ```bash
-kubectl logs -n healer -l app=k8s-debugger-agent -f
+kubectl logs -n healer -l app=healer-agent -f
 ```
 
 Each alert logs one line:
