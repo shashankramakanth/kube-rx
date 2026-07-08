@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+from datetime import datetime, timezone
 
 from openai import OpenAI
 
@@ -32,6 +33,9 @@ from mcp_server.tools.pods import (
 )
 
 logger = logging.getLogger(__name__)
+
+DIAGNOSIS_LOG = os.environ.get("DIAGNOSIS_LOG", "/var/log/kube-rx/diagnoses.log")
+os.makedirs(os.path.dirname(DIAGNOSIS_LOG), exist_ok=True)
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
@@ -351,6 +355,18 @@ TOOLS = [
 ]
 
 
+def _write_diagnosis(alertname: str, namespace: str, pod: str, content: str) -> None:
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    header = f"[{ts}] alert={alertname} namespace={namespace} pod={pod}"
+    separator = "=" * 80
+    entry = f"{separator}\n{header}\n{separator}\n{content}\n\n"
+    try:
+        with open(DIAGNOSIS_LOG, "a") as f:
+            f.write(entry)
+    except OSError as e:
+        logger.error("failed to write diagnosis log: %s", e)
+
+
 def investigate(alert: dict) -> None:
     labels      = alert.get("labels", {})
     annotations = alert.get("annotations", {})
@@ -387,6 +403,7 @@ def investigate(alert: dict) -> None:
 
         if not message.tool_calls:
             logger.info("diagnosis | alert=%s pod=%s\n%s", alertname, pod, message.content)
+            _write_diagnosis(alertname, namespace, pod, message.content)
             return
 
         messages.append(message)

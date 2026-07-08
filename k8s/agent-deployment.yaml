@@ -25,7 +25,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: healer-agent
-          image: shashankramakanth/k8s-debugger-agent:v0.2.2
+          image: shashankramakanth/k8s-debugger-agent:v0.2.3
           env:
             - name: OPENROUTER_API_KEY
               valueFrom:
