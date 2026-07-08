@@ -25,7 +25,7 @@ spec:
                 topologyKey: kubernetes.io/hostname
       containers:
         - name: healer-agent
-          image: shashankramakanth/k8s-debugger-agent:v0.2.0
+          image: shashankramakanth/k8s-debugger-agent:v0.2.1
           env:
             - name: OPENROUTER_API_KEY
               valueFrom:
@@ -33,7 +33,7 @@ spec:
                   name: healer-agent-secrets
                   key: openrouter-api-key
             - name: MODEL
-              value: "anthropic/claude-3.5-haiku"
+              value: "deepseek/deepseek-v4-flash"
           ports:
             - containerPort: 8080
           livenessProbe:
