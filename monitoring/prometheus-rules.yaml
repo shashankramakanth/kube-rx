@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1
 kind: PrometheusRule
 metadata:
   name: healer-alerts
-  namespace: monitoring
+  namespace: healer
   labels:
     release: monitoring        # required — operator only loads PrometheusRules with this label (same as the ServiceMonitor)
 spec:

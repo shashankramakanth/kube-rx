@@ -2,7 +2,7 @@ apiVersion: monitoring.coreos.com/v1alpha1
 kind: AlertmanagerConfig
 metadata:
   name: healer-webhook
-  namespace: monitoring
+  namespace: healer
   labels:
     release: monitoring        # must match alertmanagerConfigSelector (set via helm values — see note below)
 spec:
